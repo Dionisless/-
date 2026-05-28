@@ -1,48 +1,57 @@
 import { useMemo, useState } from "react";
 import { scaleLinear } from "d3-scale";
-import { useStore, selectActive } from "../model/store";
+import { useStore, selectActive, selectFocused } from "../model/store";
 import { buildPolygon, polygonPath } from "../geometry/characteristic";
 import type { CalcCondition } from "../model/types";
 
-const WIDTH = 640;
-const HEIGHT = 560;
-const M = { top: 20, right: 20, bottom: 36, left: 44 };
+const WIDTH = 620;
+const HEIGHT = 540;
+const M = { top: 20, right: 20, bottom: 36, left: 46 };
 
 const STAGE_COLORS = ["#1f77b4", "#2ca02c", "#ff7f0e", "#9467bd", "#8c564b"];
 
 export function RXPlot() {
   const calc = useStore(selectActive);
+  const focusedIdx = useStore(selectFocused);
   const [hover, setHover] = useState<CalcCondition | null>(null);
+
+  const focusedStage = calc.stages.find((s) => s.index === focusedIdx);
+  const focusedSelected = new Set(focusedStage?.selectedConditionIds ?? []);
 
   const points = useMemo(
     () =>
       calc.protocols.flatMap((p) =>
-        p.conditions
-          .filter((c) => c.visible)
-          .map((c) => ({ ...c, protocolId: p.id }))
+        p.conditions.filter((c) => c.visible).map((c) => ({ ...c, protocolId: p.id }))
       ),
     [calc.protocols]
   );
 
-  const { rMax, xMax } = useMemo(() => {
-    let r = 0;
-    let x = 0;
+  const loadPoints = calc.loadDetuning.regimes;
+
+  const { rMin, rMax, xMin, xMax } = useMemo(() => {
+    let rMax = 0, xMax = 0, rMin = 0, xMin = -5;
     for (const st of calc.stages) {
-      r = Math.max(r, st.current.RU, st.calculated.RU);
-      x = Math.max(x, st.current.XU, st.calculated.XU);
+      rMax = Math.max(rMax, st.current.RU, st.calculated.RU);
+      xMax = Math.max(xMax, st.current.XU, st.calculated.XU);
     }
     for (const p of points) {
-      r = Math.max(r, Math.abs(p.measurement.R));
-      x = Math.max(x, Math.abs(p.measurement.X));
+      rMax = Math.max(rMax, Math.abs(p.measurement.R));
+      xMax = Math.max(xMax, Math.abs(p.measurement.X));
     }
-    return { rMax: r * 1.15 || 10, xMax: x * 1.15 || 10 };
-  }, [calc.stages, points]);
+    for (const p of loadPoints) {
+      rMax = Math.max(rMax, Math.abs(p.R));
+      xMax = Math.max(xMax, Math.abs(p.X));
+    }
+    rMax = (rMax || 10) * 1.15;
+    xMax = (xMax || 10) * 1.15;
+    return { rMin: rMin - rMax * 0.25, rMax, xMin, xMax };
+  }, [calc.stages, points, loadPoints]);
 
-  const sR = scaleLinear().domain([-rMax * 0.25, rMax]).range([M.left, WIDTH - M.right]);
-  const sX = scaleLinear().domain([-xMax * 0.25, xMax]).range([HEIGHT - M.bottom, M.top]);
+  const sR = scaleLinear().domain([rMin, rMax]).range([M.left, WIDTH - M.right]);
+  const sX = scaleLinear().domain([xMin, xMax]).range([HEIGHT - M.bottom, M.top]);
 
-  const rTicks = sR.ticks(8);
-  const xTicks = sX.ticks(8);
+  const rTicks = sR.ticks(7);
+  const xTicks = sX.ticks(7);
 
   return (
     <div className="plot">
@@ -56,59 +65,93 @@ export function RXPlot() {
         ))}
 
         {/* оси */}
-        <line x1={M.left} x2={WIDTH - M.right} y1={sX(0)} y2={sX(0)} stroke="#333" />
-        <line x1={sR(0)} x2={sR(0)} y1={M.top} y2={HEIGHT - M.bottom} stroke="#333" />
+        <line x1={M.left} x2={WIDTH - M.right} y1={sX(0)} y2={sX(0)} stroke="#444" />
+        <line x1={sR(0)} x2={sR(0)} y1={M.top} y2={HEIGHT - M.bottom} stroke="#444" />
+
         {rTicks.map((t) => (
           <text key={`rt${t}`} x={sR(t)} y={HEIGHT - M.bottom + 14} fontSize={10} textAnchor="middle" fill="#666">{t}</text>
         ))}
         {xTicks.map((t) => (
           <text key={`xt${t}`} x={M.left - 6} y={sX(t) + 3} fontSize={10} textAnchor="end" fill="#666">{t}</text>
         ))}
-        <text x={WIDTH - M.right} y={sX(0) - 6} fontSize={11} textAnchor="end" fill="#333">R, Ом</text>
-        <text x={sR(0) + 6} y={M.top + 4} fontSize={11} fill="#333">X, Ом</text>
+        <text x={WIDTH - M.right} y={sX(0) - 6} fontSize={11} textAnchor="end" fill="#555">R, Ом</text>
+        <text x={sR(0) + 6} y={M.top + 4} fontSize={11} fill="#555">X, Ом</text>
 
-        {/* характеристики ступеней: текущие (сплошные) и расчётные (пунктир) */}
+        {/* характеристики ступеней */}
         {calc.stages.map((st, i) => {
           const color = STAGE_COLORS[i % STAGE_COLORS.length];
-          const cur = polygonPath(buildPolygon(st.current), sR, sX);
+          const isFocused = st.index === focusedIdx;
+          const cur  = polygonPath(buildPolygon(st.current),     sR, sX);
           const calcd = polygonPath(buildPolygon(st.calculated), sR, sX);
           return (
             <g key={st.index}>
-              <path d={cur} fill={color} fillOpacity={0.05} stroke={color} strokeWidth={1.5} />
-              <path d={calcd} fill="none" stroke={color} strokeWidth={1} strokeDasharray="4 3" opacity={0.7} />
+              <path
+                d={cur}
+                fill={color}
+                fillOpacity={isFocused ? 0.1 : 0.04}
+                stroke={color}
+                strokeWidth={isFocused ? 2 : 1.5}
+              />
+              <path
+                d={calcd}
+                fill="none"
+                stroke={color}
+                strokeWidth={isFocused ? 1.5 : 1}
+                strokeDasharray="5 3"
+                opacity={0.7}
+              />
             </g>
           );
         })}
 
-        {/* замеры из протоколов */}
-        {points.map((c) => (
-          <circle
-            key={c.id}
-            cx={sR(c.measurement.R)}
-            cy={sX(c.measurement.X)}
-            r={4}
-            fill={c.color}
-            stroke="#fff"
-            strokeWidth={1}
-            onMouseEnter={() => setHover(c)}
-            onMouseLeave={() => setHover(null)}
-          />
+        {/* нагрузочные точки */}
+        {loadPoints.map((p, i) => (
+          <g key={`load${i}`}>
+            <line x1={sR(p.R) - 5} x2={sR(p.R) + 5} y1={sX(p.X)} y2={sX(p.X)} stroke="#a0522d" strokeWidth={1.5} />
+            <line x1={sR(p.R)} x2={sR(p.R)} y1={sX(p.X) - 5} y2={sX(p.X) + 5} stroke="#a0522d" strokeWidth={1.5} />
+          </g>
         ))}
+
+        {/* замеры из протоколов */}
+        {points.map((c) => {
+          const inFocus = focusedSelected.has(c.id);
+          return (
+            <circle
+              key={c.id}
+              cx={sR(c.measurement.R)}
+              cy={sX(c.measurement.X)}
+              r={inFocus ? 6 : 4}
+              fill={c.color}
+              stroke={inFocus ? "#000" : "#fff"}
+              strokeWidth={inFocus ? 1.5 : 1}
+              onMouseEnter={() => setHover(c)}
+              onMouseLeave={() => setHover(null)}
+              style={{ cursor: "crosshair" }}
+            />
+          );
+        })}
       </svg>
+
       {hover && (
         <div className="tooltip">
-          <b>{hover.label}</b> {hover.kind}<br />
+          <b>{hover.label}</b> {hover.kind && `· ${hover.kind}`}<br />
           Z = {hover.measurement.Z.toFixed(2)} ∠ {hover.measurement.phi.toFixed(1)}°<br />
           R = {hover.measurement.R.toFixed(2)}, X = {hover.measurement.X.toFixed(2)}
         </div>
       )}
+
       <div className="legend">
         {calc.stages.map((st, i) => (
-          <span key={st.index} className="legend-item">
-            <i style={{ background: STAGE_COLORS[i % STAGE_COLORS.length] }} /> {st.index} ст
+          <span
+            key={st.index}
+            className={`legend-item${st.index === focusedIdx ? " focused" : ""}`}
+          >
+            <i style={{ background: STAGE_COLORS[i % STAGE_COLORS.length] }} />
+            {st.index} ст
           </span>
         ))}
-        <span className="legend-note">сплошная — текущая, пунктир — расчётная</span>
+        <span className="legend-sep" />
+        <span className="legend-note">▪ сплошная — текущая · пунктир — расчётная · + нагрузка</span>
       </div>
     </div>
   );

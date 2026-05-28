@@ -56,4 +56,28 @@ describe("store: единый поток данных", () => {
     expect(selectActive(useStore.getState()).stages[0].current.XU).toBe(99);
     expect(useStore.getState().project.calculations[1].stages[0].current.XU).toBe(10);
   });
+
+  it("согласования: CRUD и изменение типа приказа", () => {
+    const s = useStore.getState();
+    // сид уже содержит 2 согласования
+    expect(selectActive(s).coordinations.length).toBe(2);
+    s.addCoordination();
+    expect(selectActive(useStore.getState()).coordinations.length).toBe(3);
+    const id = selectActive(useStore.getState()).coordinations[2].id;
+    useStore.getState().setCoordinationOrderType(id, 0, "узR");
+    expect(selectActive(useStore.getState()).coordinations[2].orderTypeByStage[0]).toBe("узR");
+    useStore.getState().removeCoordination(id);
+    expect(selectActive(useStore.getState()).coordinations.length).toBe(2);
+  });
+
+  it("выбор условий ступени изолирован между ступенями", () => {
+    useStore.getState().importDz(dzBuffer("Чувств.dz"), "Чувств.dz");
+    const cid = selectActive(useStore.getState()).protocols[0].conditions[0].id;
+    useStore.getState().toggleStageCondition(1, cid);
+    expect(selectActive(useStore.getState()).stages[0].selectedConditionIds).toContain(cid);
+    expect(selectActive(useStore.getState()).stages[1].selectedConditionIds).not.toContain(cid);
+    // повторный тоггл снимает
+    useStore.getState().toggleStageCondition(1, cid);
+    expect(selectActive(useStore.getState()).stages[0].selectedConditionIds).not.toContain(cid);
+  });
 });
