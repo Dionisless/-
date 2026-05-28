@@ -1,6 +1,7 @@
 import { useStore, selectActive } from "./model/store";
 import { Tabs } from "./components/Tabs";
 import { RXPlot } from "./components/RXPlot";
+import { SelectivityMap } from "./components/SelectivityMap";
 import { StageSettingsTable } from "./components/StageSettingsTable";
 import { StageConditionSelector } from "./components/StageConditionSelector";
 import { MeasurementList } from "./components/MeasurementList";
@@ -74,6 +75,10 @@ export default function App() {
 
           <CollapsibleSection title="Расчётные условия по ступени">
             <StageConditionSelector />
+          </CollapsibleSection>
+
+          <CollapsibleSection title="Карта селективности" defaultOpen={false}>
+            <SelectivityMap />
           </CollapsibleSection>
         </main>
 
