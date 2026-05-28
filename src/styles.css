@@ -1,0 +1,212 @@
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 12px;
+  color: #1d1d1f;
+  background: #f0f0f3;
+}
+input, select, button { font: inherit; }
+button { cursor: pointer; }
+
+/* ── App shell ── */
+.app { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; background: #1c1c1e; color: #fff; flex-shrink: 0;
+}
+h1 { font-size: 16px; margin: 0; font-weight: 700; letter-spacing: -0.3px; }
+.header-sub { font-size: 11px; color: #aeaeb2; margin-left: 12px; }
+.header-left { display: flex; align-items: baseline; gap: 0; }
+
+button.primary {
+  background: #0071e3; color: #fff; border: none;
+  padding: 7px 14px; border-radius: 8px; font-weight: 600;
+}
+button.primary:hover { background: #0077ed; }
+
+/* ── Tabs ── */
+.tabs { display: flex; gap: 3px; padding: 6px 14px 0; background: #1c1c1e; flex-shrink: 0; }
+.tab {
+  background: #3a3a3c; border: none; color: #aeaeb2;
+  padding: 5px 12px; border-radius: 7px 7px 0 0;
+  max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tab.active  { background: #f0f0f3; color: #1d1d1f; font-weight: 600; }
+.tab.add     { background: transparent; border: 1px dashed #555; color: #aaa; }
+.tab:hover:not(.active) { background: #48484a; color: #fff; }
+
+/* ── Meta bar ── */
+.meta {
+  display: flex; flex-wrap: wrap; gap: 14px;
+  padding: 5px 14px; background: #fff; border-bottom: 1px solid #e0e0e5;
+  flex-shrink: 0; font-size: 11px;
+}
+.meta b { color: #6e6e73; font-weight: 500; }
+
+/* ── Workspace ── */
+.workspace { display: flex; flex: 1; overflow: hidden; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 420px; flex-shrink: 0; overflow-y: auto;
+  background: #f8f8fa; border-right: 1px solid #d2d2d7;
+  padding: 6px 0;
+}
+
+/* ── CollapsibleSection ── */
+.cs { border-bottom: 1px solid #e5e5ea; }
+.cs-header {
+  width: 100%; background: none; border: none;
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; font-weight: 600; font-size: 11.5px;
+  color: #3a3a3c; text-align: left;
+}
+.cs-header:hover { background: #ececf0; }
+.cs-arrow { font-size: 10px; color: #8e8e93; }
+.cs-badge {
+  margin-left: auto; background: #0071e3; color: #fff;
+  border-radius: 9px; padding: 1px 6px; font-size: 10px; font-weight: 600;
+}
+.cs-body { padding: 6px 10px 10px; }
+
+/* ── Main right ── */
+.main-right {
+  flex: 1; overflow-y: auto; padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+/* ── Settings table ── */
+table.settings {
+  width: 100%; border-collapse: collapse;
+  background: #fff; border: 1px solid #e5e5ea; border-radius: 8px; overflow: hidden;
+}
+table.settings th, table.settings td {
+  border: 1px solid #f0f0f0; padding: 2px 3px; text-align: center;
+}
+table.settings thead th { background: #f5f5f7; font-weight: 600; font-size: 11px; }
+table.settings .rowlabel {
+  text-align: left; font-weight: 600; font-size: 11px;
+  background: #fafafa; padding-left: 6px; white-space: nowrap;
+}
+table.settings input {
+  width: 52px; border: 1px solid transparent; background: transparent;
+  text-align: center; padding: 1px; border-radius: 4px;
+}
+table.settings input:focus { border-color: #0071e3; background: #fff; outline: none; }
+
+/* ── Coordination panel ── */
+.coord-panel { display: flex; flex-direction: column; gap: 6px; }
+.coord-row {
+  background: #fff; border: 1px solid #e5e5ea; border-radius: 8px;
+  padding: 6px 8px; display: flex; flex-direction: column; gap: 4px;
+}
+.coord-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.coord-name { flex: 1; min-width: 80px; border: 1px solid #d2d2d7; border-radius: 4px; padding: 2px 6px; }
+.coord-stages { display: flex; gap: 4px; flex-wrap: wrap; }
+.coord-stage { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.stage-lbl { font-size: 10px; color: #6e6e73; }
+.coord-stage select { font-size: 11px; padding: 1px 2px; border-radius: 3px; border: 1px solid #d2d2d7; }
+
+/* ── Check tables (sensitivity / detuning) ── */
+.check-panel { display: flex; flex-direction: column; gap: 6px; }
+table.check-table {
+  width: 100%; border-collapse: collapse;
+  background: #fff; border: 1px solid #e5e5ea; border-radius: 6px; overflow: hidden;
+}
+table.check-table th, table.check-table td {
+  border-bottom: 1px solid #f0f0f0; padding: 2px 4px; text-align: center;
+}
+table.check-table th { background: #f5f5f7; font-weight: 600; font-size: 11px; }
+
+/* ── Shared small inputs ── */
+.num-sm { width: 52px; border: 1px solid #d2d2d7; border-radius: 3px; padding: 1px 3px; text-align: center; }
+.str-sm { width: 70px; border: 1px solid #d2d2d7; border-radius: 3px; padding: 1px 3px; }
+.num-sm:focus, .str-sm:focus { border-color: #0071e3; outline: none; }
+
+/* ── Buttons ── */
+.btn-add {
+  background: none; border: 1px dashed #0071e3; color: #0071e3;
+  border-radius: 6px; padding: 4px 10px; font-size: 11px;
+  align-self: flex-start;
+}
+.btn-add:hover { background: #e8f1fc; }
+.btn-icon { background: none; border: none; padding: 0 4px; font-size: 14px; color: #8e8e93; }
+.btn-icon.remove:hover { color: #c0392b; }
+.empty-hint { color: #8e8e93; font-size: 11px; padding: 4px 0; }
+
+/* ── Plot ── */
+.plot {
+  background: #fff; border: 1px solid #e5e5ea; border-radius: 10px;
+  padding: 8px; position: relative; align-self: flex-start;
+}
+.tooltip {
+  position: absolute; top: 12px; right: 12px;
+  background: rgba(28,28,30,0.88); color: #fff;
+  padding: 6px 10px; border-radius: 8px; font-size: 11px; line-height: 1.5;
+  pointer-events: none; white-space: pre;
+}
+.legend {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  margin-top: 5px; font-size: 11px;
+}
+.legend-item { display: inline-flex; align-items: center; gap: 4px; }
+.legend-item i { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
+.legend-item.focused { font-weight: 700; }
+.legend-sep { flex: 1; }
+.legend-note { color: #8e8e93; font-size: 10px; }
+
+/* ── Stage condition selector ── */
+.scs { display: flex; flex-direction: column; gap: 6px; }
+.scs-tabs { display: flex; gap: 3px; }
+.scs-tab {
+  background: #e8e8ed; border: 1px solid #d2d2d7; border-radius: 6px 6px 0 0;
+  padding: 4px 12px; font-size: 11px;
+}
+.scs-tab.active { background: #fff; font-weight: 700; border-bottom-color: #fff; }
+.scs-body {
+  background: #fff; border: 1px solid #d2d2d7; border-radius: 0 6px 6px 6px;
+  padding: 8px; display: flex; gap: 12px; align-items: flex-start;
+}
+table.scs-sum {
+  border-collapse: collapse; min-width: 160px;
+}
+table.scs-sum th, table.scs-sum td {
+  border: 1px solid #f0f0f0; padding: 2px 6px; text-align: center; font-size: 11px;
+}
+table.scs-sum th { background: #f5f5f7; font-weight: 600; }
+table.scs-sum .rowlabel { text-align: left; background: #fafafa; font-weight: 600; }
+table.scs-sum tr.diff td { background: #fff8e6; }
+.derived { color: #2c7be5; }
+.derived-diff { color: #c0392b; font-weight: 700; }
+
+.scs-conds { flex: 1; min-width: 0; }
+.scs-conds-head { font-weight: 600; font-size: 11px; color: #6e6e73; margin-bottom: 5px; }
+.scs-cond-list { display: flex; flex-direction: column; gap: 2px; max-height: 200px; overflow-y: auto; }
+.scs-cond-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 2px 4px; border-radius: 4px; cursor: pointer; font-size: 11px;
+}
+.scs-cond-item:hover { background: #f5f5f7; }
+.scs-cond-item.checked { background: #eef6ff; }
+.cond-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.cond-lbl { color: #3a3a3c; }
+
+/* ── Measurement list ── */
+.measurements { display: flex; flex-direction: column; gap: 8px; }
+.protocol { background: #fff; border: 1px solid #e5e5ea; border-radius: 8px; overflow: hidden; }
+.protocol-head {
+  background: #f5f5f7; padding: 5px 8px; font-weight: 600; font-size: 11px;
+  color: #3a3a3c;
+}
+table.meas-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+table.meas-table th, table.meas-table td {
+  border-bottom: 1px solid #f5f5f7; padding: 2px 5px; text-align: right;
+}
+table.meas-table th { background: #fafafa; font-weight: 500; color: #6e6e73; }
+table.meas-table td:first-child, table.meas-table th:first-child { text-align: center; }
+table.meas-table tr.dim { opacity: 0.35; }
+table.meas-table input[type="color"] { width: 22px; height: 16px; border: none; background: none; padding: 0; }
+.empty { color: #6e6e73; text-align: center; padding: 12px; }
