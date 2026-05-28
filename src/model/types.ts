@@ -57,8 +57,9 @@ export interface DistanceCharacteristic {
   AL: number;   // угол скоса верхней части
   F3: number;   // угол наклона левой части
   F2: number;   // угол наклона нижней части
-  RN1: number;  // граница выреза нагрузки
+  RN1: number;  // граница выреза нагрузки по R
   FN1: number;  // угол выреза нагрузки
+  CM: number;   // смещение центра характеристики вдоль оси ФМЧ, % от ZU
   tuskAvt: number;
   tuskOper: number;
 }

@@ -1,81 +1,59 @@
-// Построение полигональной характеристики ступени ДЗ в плоскости R-X.
-//
-// Полигон строится из уставок (как на листе «Концепт»):
-//   XU  — реактивный охват (верхняя граница по X вдоль линии ФМЧ),
-//   RU  — активный охват (правая граница по R),
-//   FMC — угол максимальной чувствительности (наклон оси характеристики),
-//   AL  — скос верхней грани,
-//   F3  — наклон левой грани,
-//   F2  — наклон нижней грани,
-//   RN1/FN1 — вырез нагрузки (срез правого нижнего угла).
-//
-// Это корректная первая версия (шестигранник со срезом нагрузки); точный
-// порядок вершин согласуется с пользователем.
-
 import type { DistanceCharacteristic } from "../model/types";
 
-export interface Point {
-  R: number;
-  X: number;
-}
+export interface Point { R: number; X: number; }
 
 const deg = (d: number) => (d * Math.PI) / 180;
 
-/** Пересечение прямой через точку p с направлением dir и прямой y=kx (через 0). */
-function lineFromAngle(angleDeg: number): { dx: number; dy: number } {
-  return { dx: Math.cos(deg(angleDeg)), dy: Math.sin(deg(angleDeg)) };
-}
-
-/** Возвращает вершины полигона характеристики по часовой стрелке. */
+/** Вершины полигональной характеристики ступени ДЗ в плоскости R-X, по часовой стрелке. */
 export function buildPolygon(c: DistanceCharacteristic): Point[] {
-  const reach = lineFromAngle(c.FMC); // ось характеристики (ФМЧ)
-  // верхняя точка охвата вдоль оси ФМЧ на высоте XU по X
-  const topScale = c.XU / reach.dy;
-  const apex: Point = { R: reach.dx * topScale, X: reach.dy * topScale };
+  const cosF = Math.cos(deg(c.FMC));
+  const sinF = Math.sin(deg(c.FMC));
 
-  // правая граница по R
-  const right = c.RU;
-  // нижняя грань с наклоном F2 (через начало координат)
-  const lower = lineFromAngle(c.F2);
-  // левая грань с наклоном F3
-  const left = lineFromAngle(c.F3);
-  // скос верхней грани AL (через apex)
-  const skew = lineFromAngle(c.AL);
+  // Верхняя точка оси ФМЧ — apex на высоте XU
+  const apexDist = c.XU / (sinF || 1e-9);
+  const apex: Point = { R: cosF * apexDist, X: c.XU };
 
-  // Верхняя правая вершина: пересечение скоса (через apex) с вертикалью R=RU
-  const tSkew = (right - apex.R) / (skew.dx || 1e-9);
-  const upperRight: Point = { R: right, X: apex.X + skew.dy * tSkew };
+  // Левая вершина: грань F3 от начала координат, пересечение с горизонталью X=XU
+  const cosF3 = Math.cos(deg(c.F3));
+  const sinF3 = Math.sin(deg(c.F3));
+  const upperLeft: Point = { R: cosF3 * (c.XU / (sinF3 || 1e-9)), X: c.XU };
 
-  // Нижняя правая вершина: пересечение нижней грани с R=RU
-  const tLower = right / (lower.dx || 1e-9);
-  const lowerRight: Point = { R: right, X: lower.dy * tLower };
+  // Правая верхняя вершина: скос AL через apex до R=RU
+  const cosAL = Math.cos(deg(c.AL));
+  const sinAL = Math.sin(deg(c.AL));
+  const tSkew = (c.RU - apex.R) / (cosAL || 1e-9);
+  const upperRight: Point = { R: c.RU, X: apex.X + sinAL * tSkew };
 
-  // Левая нижняя/верхняя вершины по грани F3
-  const tLeft = apex.X / (left.dy || 1e-9);
-  const upperLeft: Point = { R: left.dx * tLeft, X: apex.X };
+  const pts: Point[] = [{ R: 0, X: 0 }, upperLeft, apex, upperRight];
 
-  let pts: Point[] = [
-    { R: 0, X: 0 },
-    upperLeft,
-    apex,
-    upperRight,
-    lowerRight,
-  ];
+  // Вырез нагрузки: заменяет нижнюю правую вершину тремя вершинами
+  if (c.RN1 > 0 && c.RU > c.RN1) {
+    const tanFN1 = Math.tan(deg(c.FN1));
+    const tanF2  = Math.tan(deg(c.F2));
+    pts.push(
+      { R: c.RU,  X: c.RU  * tanFN1 },  // начало выреза на правой границе R=RU
+      { R: c.RN1, X: c.RN1 * tanFN1 },  // внутренний угол выреза
+      { R: c.RN1, X: c.RN1 * tanF2  },  // выход на нижнюю грань F2 при R=RN1
+    );
+  } else {
+    pts.push({ R: c.RU, X: c.RU * Math.tan(deg(c.F2)) });
+  }
 
-  // Вырез нагрузки: срез в правом нижнем секторе по RN1/FN1
-  if (c.RN1 > 0) {
-    const cut = lineFromAngle(c.FN1);
-    const cutPoint: Point = { R: c.RN1, X: c.RN1 * (cut.dy / (cut.dx || 1e-9)) };
-    pts = pts.filter((p) => !(p.R > c.RN1 && p.X < cutPoint.X));
-    pts.splice(pts.length - 1, 0, cutPoint);
+  // Смещение CM%: сдвиг всего полигона вдоль оси ФМЧ
+  if (c.CM) {
+    const dR = cosF * (c.CM / 100) * apexDist;
+    const dX = sinF * (c.CM / 100) * apexDist;
+    for (const p of pts) { p.R += dR; p.X += dX; }
   }
 
   return pts;
 }
 
-export function polygonPath(pts: Point[], toR: (r: number) => number, toX: (x: number) => number): string {
-  if (pts.length === 0) return "";
-  return (
-    pts.map((p, i) => `${i === 0 ? "M" : "L"} ${toR(p.R)} ${toX(p.X)}`).join(" ") + " Z"
-  );
+export function polygonPath(
+  pts: Point[],
+  toR: (r: number) => number,
+  toX: (x: number) => number,
+): string {
+  if (!pts.length) return "";
+  return pts.map((p, i) => `${i === 0 ? "M" : "L"} ${toR(p.R)} ${toX(p.X)}`).join(" ") + " Z";
 }

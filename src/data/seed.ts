@@ -23,7 +23,7 @@ function char(
   return {
     XU, RU, T,
     FMC: 75, AL: -25, F3: 115, F2: -15,
-    RN1: 80, FN1: 30,
+    RN1: 80, FN1: 30, CM: 0,
     tuskAvt: 0, tuskOper: 0.5,
     ...over,
   };

@@ -83,8 +83,26 @@ export function RXPlot() {
           const isFocused = st.index === focusedIdx;
           const cur  = polygonPath(buildPolygon(st.current),     sR, sX);
           const calcd = polygonPath(buildPolygon(st.calculated), sR, sX);
+
+          // Линия ФМЧ (ось максимальной чувствительности) для выбранной ступени
+          const fmcLine = isFocused ? (() => {
+            const rad = (st.current.FMC * Math.PI) / 180;
+            const cosF = Math.cos(rad), sinF = Math.sin(rad);
+            const tR = cosF > 0 ? (rMax - 0) / cosF : Infinity;
+            const tX = sinF > 0 ? (xMax - 0) / sinF : Infinity;
+            const t = Math.min(tR, tX) * 1.05;
+            return { x2: sR(cosF * t), y2: sX(sinF * t) };
+          })() : null;
+
           return (
             <g key={st.index}>
+              {fmcLine && (
+                <line
+                  x1={sR(0)} y1={sX(0)}
+                  x2={fmcLine.x2} y2={fmcLine.y2}
+                  stroke={color} strokeWidth={1} strokeDasharray="3 4" opacity={0.5}
+                />
+              )}
               <path
                 d={cur}
                 fill={color}

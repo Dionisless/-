@@ -11,6 +11,7 @@ const FIELDS: Array<{ key: keyof DistanceCharacteristic; label: string }> = [
   { key: "F2", label: "Ф2" },
   { key: "RN1", label: "RН1" },
   { key: "FN1", label: "ФН1" },
+  { key: "CM",  label: "CM%" },
 ];
 
 export function StageSettingsTable({ set }: { set: "current" | "calculated" }) {
